@@ -147,8 +147,8 @@ def main():
     x_test = []
     y_test = []
 
-    train_yelp = "../csv/yelp_dataset/train.csv"
-    test_yelp = "../csv/yelp_dataset/test.csv"
+    train_yelp = "../data/csv/yelp_dataset/train.csv"
+    test_yelp = "../data/csv/yelp_dataset/test.csv"
 
     print("Loading Yelp data ... ")
     x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
