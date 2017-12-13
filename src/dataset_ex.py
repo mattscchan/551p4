@@ -20,7 +20,7 @@ def parse_function(example_proto):
 	# Returns these values.
 	return text_tensor, one_hot_label
 
-def create_dataset(filenames, parse_function, num_parallel_calls=1, batch_size=50, 	shuffle_buffer=10000, num_epochs=-1):
+def create_dataset(filenames, parse_function, num_parallel_calls=1, batch_size=50, shuffle_buffer=10000, num_epochs=-1):
 	# filenames: a placeholder for a list of files that you use to create a TFRecordDataset
 	# parse_function: the name of a parse function that you will use to "parse" the data you get from your .tfrecords file
 	# num_parallel_calls: specify an int to allow multithreading
