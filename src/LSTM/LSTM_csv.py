@@ -177,7 +177,7 @@ def main():
     model.train(combined_x, total_examples=model.corpus_count, epochs=model.iter)
     model.save("yelp_combined_word2vec")
     '''
-    model = Word2Vec.load("yelp_combined_word2vec")
+    model = Word2Vec.load("../data/word2vec/yelp_combined_word2vec")
 
     # ===================
     # LSTM MODEL FOR YELP
@@ -221,7 +221,7 @@ def main():
     # LOAD THE DATA FOR FAKE NEWS
     # ============================
 
-    news_data = "../csv/fakenews_dataset/fake_news.csv"
+    news_data = "../data/csv/fake_news.csv"
 
     print("Loading Fake News data ... ")
 
@@ -241,7 +241,7 @@ def main():
     model.train(combined_x_news, total_examples=model.corpus_count, epochs=model.iter)
     model.save("fakenews_combined_word2vec")
     '''
-    model = Word2Vec.load("fakenews_combined_word2vec")
+    model = Word2Vec.load("../data/word2vec/fakenews_combined_word2vec")
 
     # Set parameters
     vocab_dim = 300

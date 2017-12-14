@@ -1,7 +1,7 @@
 import gensim 
 import argparse
 
-OUTPUT_FILE = '../../data/word2vec/proc_glove.txt'
+OUTPUT_FILE = './data/proc_glove_vec.txt'
 
 def main(args):
 	gensim.scripts.glove2word2vec.glove2word2vec(args.file, OUTPUT_FILE)
