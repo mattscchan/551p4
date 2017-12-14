@@ -147,8 +147,8 @@ def main():
     x_test = []
     y_test = []
 
-    train_yelp = "../data/csv/yelp_dataset/train.csv"
-    test_yelp = "../data/csv/yelp_dataset/test.csv"
+    train_yelp = "../../data/csv/yelp_dataset/train.csv"
+    test_yelp = "../../data/csv/yelp_dataset/test.csv"
 
     print("Loading Yelp data ... ")
     x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
@@ -177,7 +177,7 @@ def main():
     model.train(combined_x, total_examples=model.corpus_count, epochs=model.iter)
     model.save("yelp_combined_word2vec")
     '''
-    model = Word2Vec.load("../data/word2vec/yelp_combined_word2vec")
+    model = Word2Vec.load("../../data/word2vec/yelp_combined_word2vec")
 
     # ===================
     # LSTM MODEL FOR YELP
