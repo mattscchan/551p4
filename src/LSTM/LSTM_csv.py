@@ -8,6 +8,8 @@ from gensim.corpora.dictionary import Dictionary
 import numpy as np
 import random
 import csv
+import os
+from os.path import dirname
 from sklearn.model_selection import train_test_split
 
 random.seed(1882)
@@ -147,9 +149,9 @@ def main():
     x_test = []
     y_test = []
 
-    train_yelp = "../../data/csv/yelp_dataset/train.csv"
-    test_yelp = "../../data/csv/yelp_dataset/test.csv"
-
+    train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/train.csv')
+    train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
+   
     print("Loading Yelp data ... ")
     x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
     x_test, y_test = load_data_yelp(test_yelp, x_test, y_test)
@@ -177,7 +179,7 @@ def main():
     model.train(combined_x, total_examples=model.corpus_count, epochs=model.iter)
     model.save("yelp_combined_word2vec")
     '''
-    model = Word2Vec.load("../../data/word2vec/yelp_combined_word2vec")
+    model = Word2Vec.load(os.path.join(dirname(dirname(os.getcwd())), 'data/word2vec/yelp_combined_word2vec'))
 
     # ===================
     # LSTM MODEL FOR YELP
@@ -221,7 +223,7 @@ def main():
     # LOAD THE DATA FOR FAKE NEWS
     # ============================
 
-    news_data = "../../data/csv/fake_news.csv"
+    news_data = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/fake_news/fake_news.csv')
 
     print("Loading Fake News data ... ")
 
@@ -241,8 +243,8 @@ def main():
     model.train(combined_x_news, total_examples=model.corpus_count, epochs=model.iter)
     model.save("fakenews_combined_word2vec")
     '''
-    model = Word2Vec.load("../../data/word2vec/fakenews_combined_word2vec")
-
+    model = Word2Vec.load(os.path.join(dirname(dirname(os.getcwd())), 'data/word2vec/fakenews_combined_word2vec'))
+    
     # Set parameters
     vocab_dim = 300
     maximum_string = max(combined_x_news, key=len)
