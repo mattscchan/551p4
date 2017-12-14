@@ -83,7 +83,6 @@ def transform_data(model, x_train, y_train, x_test, y_test):
 
     x_train, y_train = parse_data(x_train, y_train)
     x_test, y_test = parse_data(x_test, y_test)
-    print(x_train[0])
 
     return w2indx, w2vec, x_train, y_train, x_test, y_test
 
@@ -196,31 +195,31 @@ def main():
     index_dict, word_vectors, x_train, y_train, x_test, y_test = transform_data(model, x_train, y_train,
                                                                                 x_test, y_test)
 
-    # print("Setting up arrays for Neural Network Embedding Layer ... ")
-    # n_symbols = len(index_dict) + 1
-    # embedding_weights = np.zeros((n_symbols, vocab_dim))
+    print("Setting up arrays for Neural Network Embedding Layer ... ")
+    n_symbols = len(index_dict) + 1
+    embedding_weights = np.zeros((n_symbols, vocab_dim))
 
-    # for word, index in index_dict.items():
-    #     embedding_weights[index, :] = word_vectors[word]
+    for word, index in index_dict.items():
+        embedding_weights[index, :] = word_vectors[word]
 
-    # print("Initializing Datasets ...")
-    # X_train = x_train
-    # y_train = y_train
-    # X_test = x_test
-    # y_test = y_test
+    print("Initializing Datasets ...")
+    X_train = x_train
+    y_train = y_train
+    X_test = x_test
+    y_test = y_test
 
-    # print("Pad sequences (samples x time)")
-    # X_train = sequence.pad_sequences(X_train, maxlen=input_length)
-    # X_test = sequence.pad_sequences(X_test, maxlen=input_length)
-    # print('X_train shape:', X_train.shape)
-    # print('X_test shape:', X_test.shape)
+    print("Pad sequences (samples x time)")
+    X_train = sequence.pad_sequences(X_train, maxlen=input_length)
+    X_test = sequence.pad_sequences(X_test, maxlen=input_length)
+    print('X_train shape:', X_train.shape)
+    print('X_test shape:', X_test.shape)
 
-    # print('Convert labels to Numpy Sets...')
-    # y_train = np.array(y_train)
-    # y_test = np.array(y_test)
+    print('Convert labels to Numpy Sets...')
+    y_train = np.array(y_train)
+    y_test = np.array(y_test)
 
-    # print("Running the model ...")
-    # lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5')
+    print("Running the model ...")
+    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5')
 
 
     # ==============================================================
