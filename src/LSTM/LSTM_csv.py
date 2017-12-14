@@ -167,9 +167,9 @@ def main():
     print("Tokenizing ...")
     combined_x = tokenizer(combined_x)
 
-    ==================================
-    CONVERT TO WORD2VEC REPRESENTATION
-    ==================================
+    # ==================================
+    # CONVERT TO WORD2VEC REPRESENTATION
+    # ==================================
 
     # Set parameters
     vocab_dim = 300
