@@ -155,17 +155,17 @@ def main():
     x_test = []
     y_test = []
 
-    train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/train.csv')
-    test_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
+    # train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/train.csv')
+    # test_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
    
-    print("Loading Yelp data ... ")
-    x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
-    x_test, y_test = load_data_yelp(test_yelp, x_test, y_test)
+    # print("Loading Yelp data ... ")
+    # x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
+    # x_test, y_test = load_data_yelp(test_yelp, x_test, y_test)
 
-    combined_x = x_train + x_test
+    # combined_x = x_train + x_test
 
-    print("Tokenizing ...")
-    combined_x = tokenizer(combined_x)
+    # print("Tokenizing ...")
+    # combined_x = tokenizer(combined_x)
 
     # ==================================
     # CONVERT TO WORD2VEC REPRESENTATION
