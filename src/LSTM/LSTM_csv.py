@@ -83,7 +83,7 @@ def transform_data(model, x_train, y_train, x_test, y_test):
 
     x_train, y_train = parse_data(x_train, y_train)
     x_test, y_test = parse_data(x_test, y_test)
-    print(y_train[0])
+    print(x_train[0])
 
     return w2indx, w2vec, x_train, y_train, x_test, y_test
 
