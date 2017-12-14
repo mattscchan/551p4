@@ -120,6 +120,7 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
     model.add(Embedding(output_dim=vocab_dim,
                         input_dim=n_symbols,
                         mask_zero=False,
+                        trainable=False,
                         weights=[embedding_weights],
                         input_length=input_length))
     model.add(LSTM(units=512))
@@ -134,7 +135,7 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
     print("Train...")
     checkpoint = ModelCheckpoint(output_name, monitor='val_acc', mode='auto', save_best_only=True, verbose=1)
     callback_list = [checkpoint]
-    model.fit(X_train, y_train, batch_size=32, epochs=5, validation_data=(X_test, y_test),
+    model.fit(X_train, y_train, batch_size=32, epochs=1, validation_data=(X_test, y_test),
               shuffle=True, callbacks=callback_list)
 
     print("Evaluate...")
