@@ -11,6 +11,7 @@ import csv
 import os
 from os.path import dirname
 from sklearn.model_selection import train_test_split
+from keras.callbacks import ModelCheckPoint
 
 random.seed(1882)
 
@@ -113,7 +114,7 @@ def tokenizer(text):
 # ===========
 
 
-def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length):
+def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, output_name):
 
     model = Sequential()
     model.add(Embedding(output_dim=vocab_dim,
@@ -131,12 +132,13 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
     model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
 
     print("Train...")
+    checkpoint = ModelCheckPoint(output_name, monitor='val_acc', mode='auto', save_best_only=True, verbose=1)
+    callback_list = [checkpoint]
     model.fit(X_train, y_train, batch_size=32, epochs=5, validation_data=(X_test, y_test),
-              shuffle=True)
+              shuffle=True, callbacks=callback_list)
 
     print("Evaluate...")
     score = model.evaluate(X_test, y_test, batch_size=32)
-
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
 
@@ -216,7 +218,7 @@ def main():
     y_test = np.array(y_test)
 
     print("Running the model ...")
-    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length)
+    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5')
 
 
     # ==============================================================
@@ -283,7 +285,7 @@ def main():
     
     print("Running the model ...")
 
-    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length)
+    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5')
 
 
 if __name__ == '__main__':
