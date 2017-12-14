@@ -48,7 +48,10 @@ def load_data_yelp(filename, x, y):
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             x.append(row[1])
-            y.append(row[0])
+            if row[0] == '1':
+                y.append(0)
+            else:
+                y.append(1)
     return x, y
 
 def create_dictionaries(x, y):
