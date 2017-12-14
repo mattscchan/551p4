@@ -8,7 +8,10 @@ from gensim.corpora.dictionary import Dictionary
 import numpy as np
 import random
 import csv
+import os
+from os.path import dirname
 from sklearn.model_selection import train_test_split
+from keras.callbacks import ModelCheckpoint
 
 random.seed(1882)
 
@@ -46,7 +49,10 @@ def load_data_yelp(filename, x, y):
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             x.append(row[1])
-            y.append(row[0])
+            if row[0] == '1':
+                y.append(0)
+            else:
+                y.append(1)
     return x, y
 
 def create_dictionaries(x, y):
@@ -108,12 +114,13 @@ def tokenizer(text):
 # ===========
 
 
-def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length):
+def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, output_name):
 
     model = Sequential()
     model.add(Embedding(output_dim=vocab_dim,
                         input_dim=n_symbols,
                         mask_zero=False,
+                        trainable=False,
                         weights=[embedding_weights],
                         input_length=input_length))
     model.add(LSTM(units=512))
@@ -126,12 +133,13 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
     model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
 
     print("Train...")
-    model.fit(X_train, y_train, batch_size=32, epochs=5, validation_data=(X_test, y_test),
-              shuffle=True)
+    checkpoint = ModelCheckpoint(output_name, monitor='val_acc', mode='auto', save_best_only=True, verbose=1)
+    callback_list = [checkpoint]
+    model.fit(X_train, y_train, batch_size=32, epochs=3, validation_data=(X_test, y_test),
+              shuffle=True, callbacks=callback_list)
 
     print("Evaluate...")
     score = model.evaluate(X_test, y_test, batch_size=32)
-
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
 
@@ -147,9 +155,9 @@ def main():
     x_test = []
     y_test = []
 
-    train_yelp = "../csv/yelp_dataset/train.csv"
-    test_yelp = "../csv/yelp_dataset/test.csv"
-
+    train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/train.csv')
+    test_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
+   
     print("Loading Yelp data ... ")
     x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
     x_test, y_test = load_data_yelp(test_yelp, x_test, y_test)
@@ -177,7 +185,7 @@ def main():
     model.train(combined_x, total_examples=model.corpus_count, epochs=model.iter)
     model.save("yelp_combined_word2vec")
     '''
-    model = Word2Vec.load("yelp_combined_word2vec")
+    model = Word2Vec.load(os.path.join(dirname(dirname(os.getcwd())), 'data/word2vec/yelp_combined_word2vec'))
 
     # ===================
     # LSTM MODEL FOR YELP
@@ -211,74 +219,74 @@ def main():
     y_test = np.array(y_test)
 
     print("Running the model ...")
-    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length)
+    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5')
 
 
     # ==============================================================
 
 
-    # ============================
-    # LOAD THE DATA FOR FAKE NEWS
-    # ============================
+    # # ============================
+    # # LOAD THE DATA FOR FAKE NEWS
+    # # ============================
 
-    news_data = "../csv/fakenews_dataset/fake_news.csv"
+    # news_data = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/fakenews_dataset/fake_news.csv')
 
-    print("Loading Fake News data ... ")
+    # print("Loading Fake News data ... ")
 
-    x_train_news, y_train_news, x_test_news, y_test_news = load_data_fakenews(news_data)
+    # x_train_news, y_train_news, x_test_news, y_test_news = load_data_fakenews(news_data)
 
-    combined_x_news = x_train_news + x_test_news
+    # combined_x_news = x_train_news + x_test_news
 
-    print("Tokenizing Fake News data ...")
+    # print("Tokenizing Fake News data ...")
 
-    combined_x_news = tokenizer(combined_x_news)
+    # combined_x_news = tokenizer(combined_x_news)
 
 
-    print("Training a Fake News Word2Vec model ...")
-    '''
-    model = Word2Vec(size=vocab_dim, min_count=n_exposures, window=window_size)
-    model.build_vocab(combined_x_news)
-    model.train(combined_x_news, total_examples=model.corpus_count, epochs=model.iter)
-    model.save("fakenews_combined_word2vec")
-    '''
-    model = Word2Vec.load("fakenews_combined_word2vec")
-
-    # Set parameters
-    vocab_dim = 300
-    maximum_string = max(combined_x_news, key=len)
-    input_length = len(maximum_string) # average length is 775
-
-    # ========================
-    # LSTM MODEL FOR FAKE NEWS
-    # ========================
-
-    print("Transform the data ...")
-    index_dict, word_vectors, x_train, y_train, x_test, y_test = transform_data(model, x_train_news, y_train_news, x_test_news, y_test_news)
-
-    print("Setting up arrays for Neural Network Embedding Layer ... ")
-    n_symbols = len(index_dict) + 1
-    embedding_weights = np.zeros((n_symbols, vocab_dim))
+    # print("Training a Fake News Word2Vec model ...")
+    # '''
+    # model = Word2Vec(size=vocab_dim, min_count=n_exposures, window=window_size)
+    # model.build_vocab(combined_x_news)
+    # model.train(combined_x_news, total_examples=model.corpus_count, epochs=model.iter)
+    # model.save("fakenews_combined_word2vec")
+    # '''
+    # model = Word2Vec.load(os.path.join(dirname(dirname(os.getcwd())), 'data/word2vec/fakenews_combined_word2vec'))
     
-    for word, index in index_dict.items():
-        embedding_weights[index, :] = word_vectors[word]
+    # # Set parameters
+    # vocab_dim = 300
+    # maximum_string = max(combined_x_news, key=len)
+    # input_length = len(maximum_string) # average length is 775
 
-    print("Initializing Datasets ...")
-    X_train = x_train
-    y_train = y_train
-    X_test = x_test
-    y_test = y_test
+    # # ========================
+    # # LSTM MODEL FOR FAKE NEWS
+    # # ========================
 
-    print("Pad sequences (samples x time)")
-    X_train = sequence.pad_sequences(X_train, maxlen= input_length)
-    X_test = sequence.pad_sequences(X_test, maxlen= input_length)
+    # print("Transform the data ...")
+    # index_dict, word_vectors, x_train, y_train, x_test, y_test = transform_data(model, x_train_news, y_train_news, x_test_news, y_test_news)
 
-    print('Convert labels to Numpy Sets...')
-    y_train = np.array(y_train)
-    y_test = np.array(y_test)
+    # print("Setting up arrays for Neural Network Embedding Layer ... ")
+    # n_symbols = len(index_dict) + 1
+    # embedding_weights = np.zeros((n_symbols, vocab_dim))
     
-    print("Running the model ...")
+    # for word, index in index_dict.items():
+    #     embedding_weights[index, :] = word_vectors[word]
 
-    lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length)
+    # print("Initializing Datasets ...")
+    # X_train = x_train
+    # y_train = y_train
+    # X_test = x_test
+    # y_test = y_test
+
+    # print("Pad sequences (samples x time)")
+    # X_train = sequence.pad_sequences(X_train, maxlen= input_length)
+    # X_test = sequence.pad_sequences(X_test, maxlen= input_length)
+
+    # print('Convert labels to Numpy Sets...')
+    # y_train = np.array(y_train)
+    # y_test = np.array(y_test)
+    
+    # print("Running the model ...")
+
+    # lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5')
 
 
 if __name__ == '__main__':
