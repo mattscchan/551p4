@@ -150,7 +150,7 @@ def main():
     y_test = []
 
     train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/train.csv')
-    train_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
+    test_yelp = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/yelp_dataset/test.csv')
    
     print("Loading Yelp data ... ")
     x_train, y_train = load_data_yelp(train_yelp, x_train, y_train)
