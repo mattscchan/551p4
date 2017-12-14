@@ -229,7 +229,7 @@ def main():
     # LOAD THE DATA FOR FAKE NEWS
     # ============================
 
-    news_data = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/fake_news/fake_news.csv')
+    news_data = os.path.join(dirname(dirname(os.getcwd())), 'data/csv/fake_newsdataset/fake_news.csv')
 
     print("Loading Fake News data ... ")
 
