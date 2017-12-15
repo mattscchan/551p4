@@ -72,6 +72,9 @@ def load_data(filepath, embeddings_path):
                     data_sequence = len(sample)
             except KeyError:
                 pass
+        if i % 1000 == 0:
+            print('Loading: %6d/%d' % (i, len(yelp_x)), end='\r', flush=True)
+    print('Loading: %6d/%d' % (i, len(yelp_x)))
 
     zeros = [0.0 for i in range(300)]
     for i,v in enumerate(x):
