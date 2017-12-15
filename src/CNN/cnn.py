@@ -118,8 +118,8 @@ def load_data(filepath, embeddings_path, subset=None):
 
 def main(args):
     modelpath = 'model/' + args.dataset + '/'
-    datapath = 'data/csv/' + args.dataset + '/train.csv'
-    vecpath = 'data/word2vec/' + args.dataset + '_combined_word2vec'
+    datapath = 'data/csv/' + args.dataset + '_dataset/train.csv'
+    vecpath = 'data/word2vec/' + args.dataset + '_dataset/_combined_word2vec'
 
     # CONSTANTS
     data_features = 300
