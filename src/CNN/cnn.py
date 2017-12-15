@@ -130,6 +130,7 @@ def main(args):
 
     # HYPERPARAMETERS
     filter_size = 3
+    subset = None
     if args.model == 'scnn':
         filter_num = 100
         dropout_rate = 0.5
