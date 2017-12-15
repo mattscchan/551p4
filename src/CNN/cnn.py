@@ -62,6 +62,7 @@ def load_data(filepath, embeddings_path):
     model = Word2Vec.load(embeddings_path)
     x = []
     data_sequence = 0
+    size = len(yelp_x)
     for i, s in enumerate(yelp_x):
         sample = []
         for w in re.sub('[^a-zA-Z0-9\s]', '', s[0]).split():
@@ -72,6 +73,9 @@ def load_data(filepath, embeddings_path):
                     data_sequence = len(sample)
             except KeyError:
                 pass
+        if i % 1000 == 0:
+            print('Loading: %6d/%d' % (i, size), end='\r', flush=True)
+        print('Loading: %6d/%d' % (i, size))
 
     zeros = [0.0 for i in range(300)]
     for i,v in enumerate(x):
