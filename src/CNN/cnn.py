@@ -70,30 +70,26 @@ def load_data(filepath, embeddings_path, subset=None):
 
     model = Word2Vec.load(embeddings_path)
     x = []
-    data_sequence = 0
+    zeros = [0.0 for i in range(300)]
+    data_sequence = 256
     for i, s in enumerate(yelp_x[:subset]):
         sample = []
         for w in re.sub('[^a-zA-Z0-9\s]', '', s[0]).split():
-            try:
-                sample.append(list(model[re.sub('\W', '', w[0].lower())]))
-                if len(sample) > data_sequence:
-                    data_sequence = len(sample)
-            except KeyError:
-                pass
+            if len(sample) > data_sequence:
+                break
+            else:
+                try:
+                    sample.append(list(model[re.sub('\W', '', w[0].lower())]))
+                except KeyError:
+                    pass
+        for _ in range(data_sequence - len(sample)):
+            sample.append(zeros)
         x.append(sample)
-        if i % 1000 == 0:
-            print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
-    print('Loading: %6d/%d' % (i, subset))
-
-    zeros = [0.0 for i in range(300)]
-    for i,v in enumerate(x):
-        for _ in range(data_sequence - len(v)):
-            x[i].append(zeros)
 
     x = np.array(x)
     y = np.array(y)
     print('Dataset shape: ', x.shape, y.shape)
-    return x, y, data_sequence
+    yield x, y, data_sequence
 
 def main():
     # CONSTANTS
@@ -106,8 +102,8 @@ def main():
     filter_num = 100
     dropout_rate = 0.5
     mini_batch = 50
-    num_epochs = 500
-    subset = None
+    num_epochs = 1
+    subset = 100000
 
     print('Loading Dataset')
     x, y, data_sequence = load_data('data/csv/yelp_dataset/train.csv', 'data/word2vec/yelp_combined_word2vec', subset=subset)
