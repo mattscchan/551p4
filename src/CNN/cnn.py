@@ -137,7 +137,7 @@ def main(args):
         num_epochs = int(args.epochs)
         filter_blocks = None
         optimizer = Adadelta()
-    else args.model == 'dcnn':
+    elif args.model == 'dcnn':
         filter_num = 64
         dropout_rate = 0
         mini_batch = 128
