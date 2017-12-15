@@ -106,8 +106,8 @@ def main():
     filter_num = 100
     dropout_rate = 0.5
     mini_batch = 50
-    num_epochs = 1
-    subset = 1000
+    num_epochs = 500
+    subset = None
 
     print('Loading Dataset')
     x, y, data_sequence = load_data('data/csv/yelp_dataset/train.csv', 'data/word2vec/yelp_combined_word2vec', subset=subset)
