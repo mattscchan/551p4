@@ -229,7 +229,7 @@ def main(args):
         y_test = np.array(y_test)
 
         print("Running the model ...")
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.s)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.saved)
 
 
     # ==============================================================
@@ -297,7 +297,7 @@ def main(args):
         
         print("Running the model ...")
 
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.s)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.saved)
 
 
     else: 
