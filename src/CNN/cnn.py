@@ -76,7 +76,7 @@ def load_data(filepath, embeddings_path, subset=None):
     if not subset:
         subset = len(yelp_y)
 
-    sequence_length = max([len(s.split(' ')) for s in yelp_x[:subset])
+    sequence_length = max([len(s.split(' ')) for s in yelp_x[:subset]])
     y = []
     for i in yelp_y[:subset]:
         if i == 0:
