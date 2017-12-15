@@ -66,8 +66,8 @@ class CNN:
                     ConvBlock(model=self.model, kernel_size=filter_size, filters=cur_filter_num)
                 self.model.add(MaxPooling1D(pool_size=3, strides=2))
                 cur_filter_num *= 2
-
             self.model.add(Flatten())
+
             self.model.add(Dense(2048, activation='relu', name='Dense1'))
             self.model.add(Dense(2048, activation='relu', name='Dense2'))
             self.model.add(Dense(self.num_labels, activation='softmax', name='Output'))
