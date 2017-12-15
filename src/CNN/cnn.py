@@ -172,7 +172,7 @@ def main(args):
                   mini_batch=mini_batch)
 
 if __name__ == '__main__':
-    parse = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('dataset')
     parser.add_argument('model')
     parser.add_argument('epochs', default=1)
