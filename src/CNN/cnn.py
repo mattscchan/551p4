@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import re
 from tensorflow.python.keras.preprocessing import sequence
-from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.models import Sequential, load_model
 from tensorflow.python.keras.layers import InputLayer, Input
 from tensorflow.python.keras.layers import Dense, Dropout, Reshape, Flatten, Embedding
 from tensorflow.python.keras.layers import Conv1D, MaxPooling1D, BatchNormalization
@@ -14,24 +14,25 @@ from gensim.models import Word2Vec
 from gensim.corpora.dictionary import Dictionary
 
 class CNN:
-    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings):
+    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings, savepath):
         self.x = x
         self.y = y
         self.num_labels = num_labels
         self.data_features = data_features
         self.data_sequence = data_sequence
-        self.model = Sequential()
-        #self.model.add(InputLayer(input_shape=((self.data_sequence, self.data_features))))
-        print('Input length: ', self.data_sequence)
-        print('Input dim: ', vocab_size)
-        print('Output dim: ', self.data_features)
-        print('Weights: ', embeddings.shape)
-        self.model.add(Embedding(input_length=self.data_sequence,
-                                 input_dim=vocab_size, 
-                                 output_dim=self.data_features, 
-                                 weights=[embeddings], 
-                                 mask_zero=False,
-                                 trainable=False))
+        self.savepath = savepath
+        if saved:
+            print('Loading saved model')
+            self.model = load_model(savepath)
+        else:
+            self.model = Sequential()
+            #self.model.add(InputLayer(input_shape=((self.data_sequence, self.data_features))))
+            self.model.add(Embedding(input_length=self.data_sequence,
+                                     input_dim=vocab_size, 
+                                     output_dim=self.data_features, 
+                                     weights=[embeddings], 
+                                     mask_zero=False,
+                                     trainable=False))
 
     def graph(self, type='shallow', filter_size=3, filter_num=100, num_filter_block=None, dropout_rate=0):
 
@@ -61,9 +62,9 @@ class CNN:
             self.model.add(Dense(2048, activation='relu'))
             self.model.add(Dense(self.num_labels, activation='softmax'))
 
-    def train(self, optimizer, modelpath, num_epochs=1, mini_batch=1, val_split=0.2):
+    def train(self, optimizer, num_epochs=1, mini_batch=1, val_split=0.2):
         self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-        checkpoint = ModelCheckpoint(modelpath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+        checkpoint = ModelCheckpoint(self.savepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
         callbacks_list = [checkpoint]
         self.model.fit(self.x, self.y, validation_split=val_split, epochs=num_epochs, 
                        batch_size=mini_batch, callbacks=callbacks_list)
@@ -159,10 +160,12 @@ def main(args):
                  data_sequence=data_sequence, 
                  num_labels=data_num_classes, 
                  vocab_size=vocab_size, 
-                 embeddings=embeddings)
-    shallow.graph(type=args.model, 
-                  num_filter_block=filter_blocks, 
-                  dropout_rate=dropout_rate)
+                 embeddings=embeddings,
+                 savepath=savepath)
+    if not args.saved:
+        shallow.graph(type=args.model, 
+                      num_filter_block=filter_blocks, 
+                      dropout_rate=dropout_rate)
     shallow.train(optimizer=optimizer, 
                   modelpath=savepath, 
                   num_epochs=num_epochs, 
