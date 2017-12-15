@@ -134,14 +134,14 @@ def main(args):
         filter_num = 100
         dropout_rate = 0.5
         mini_batch = 50
-        num_epochs = 100
+        num_epochs = int(args.epochs)
         filter_blocks = None
         optimizer = Adadelta()
     else args.model == 'dcnn':
         filter_num = 64
         dropout_rate = 0
         mini_batch = 128
-        num_epochs = 10
+        num_epochs = int(args.epochs)
         filter_blocks = [10, 10, 4, 4]
         optimizer = SGD()
 
@@ -175,6 +175,7 @@ if __name__ == '__main__':
     parse = argparse.ArgumentParser()
     parser.add_argument('dataset')
     parser.add_argument('model')
+    parser.add_argument('epochs', default=1)
     parser.add_argument('-s', '--saved', action='store_true', default=False)
     args = parser.parse_args()
     main(args)
