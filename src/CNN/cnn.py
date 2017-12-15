@@ -15,7 +15,7 @@ from gensim.corpora.dictionary import Dictionary
 from sklearn.model_selection import train_test_split
 
 class CNN:
-    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings, savepath, saved=False):
+    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, savepath, embeddings, trainable=False, saved=False):
         self.x = x
         self.y = y
         self.num_labels = num_labels
@@ -28,20 +28,27 @@ class CNN:
         else:
             self.model = Sequential()
             #self.model.add(InputLayer(input_shape=((self.data_sequence, self.data_features))))
-            self.model.add(Embedding(input_length=self.data_sequence,
-                                     input_dim=vocab_size, 
-                                     output_dim=self.data_features, 
-                                     weights=[embeddings], 
-                                     mask_zero=False,
-                                     trainable=False))
+            if not trainable:
+                self.model.add(Embedding(input_length=self.data_sequence,
+                                         input_dim=vocab_size, 
+                                         output_dim=self.data_features, 
+                                         weights=[embeddings], 
+                                         mask_zero=False,
+                                         trainable=trainable))
+            else:
+                self.model.add(Embedding(input_length=self.data_sequence,
+                                         input_dim=vocab_size, 
+                                         output_dim=self.data_features, 
+                                         mask_zero=False,
+                                         trainable=trainable))
 
     def graph(self, type='shallow', filter_size=3, filter_num=100, num_filter_block=None, dropout_rate=0):
 
         def ConvBlock(model, filters, kernel_size=filter_size):
             model.add(BatchNormalization())
-            model.add(Conv1D(filters=filters, kernel_size=kernel_size, activation='relu'))
+            model.add(Conv1D(filters=filters, kernel_size=kernel_size, padding='same', activation='relu'))
             model.add(BatchNormalization())
-            model.add(Conv1D(filters=filters, kernel_size=kernel_size, activation='relu'))
+            model.add(Conv1D(filters=filters, kernel_size=kernel_size, padding='same', activation='relu'))
 
         if type == 'shallow' or type == 'scnn':
             self.model.add(Conv1D(kernel_size=filter_size, strides=1, filters=filter_num, padding='valid', activation='relu'))
@@ -51,7 +58,7 @@ class CNN:
             self.model.add(Dense(self.num_labels, activation='softmax'))
 
         elif type == 'deep' or type == 'dcnn':
-            self.model.add(Conv1D(kernel_size=filter_size, filters=filter_num, padding='valid', activation='relu'))
+            self.model.add(Conv1D(kernel_size=filter_size, filters=filter_num, padding='same', activation='relu'))
 
             cur_filter_num = filter_num
             for _, num_blocks in enumerate(num_filter_block):
@@ -59,9 +66,12 @@ class CNN:
                     ConvBlock(model=self.model, kernel_size=filter_size, filters=cur_filter_num)
                 self.model.add(MaxPooling1D(pool_size=3, strides=2))
                 cur_filter_num *= 2
-            self.model.add(Dense(2048, activation='relu'))
-            self.model.add(Dense(2048, activation='relu'))
-            self.model.add(Dense(self.num_labels, activation='softmax'))
+
+            self.model.add(Flatten())
+            self.model.add(Dense(2048, activation='relu', name='Dense1'))
+            self.model.add(Dense(2048, activation='relu', name='Dense2'))
+            self.model.add(Dense(self.num_labels, activation='softmax', name='Output'))
+            self.model.summary()
 
     def train(self, optimizer, num_epochs=1, mini_batch=1, val_split=0.2):
         self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
@@ -75,7 +85,7 @@ class CNN:
         for name, value in zip(self.model.metrics_names, result):
                 print(name, value)
 
-def load_data(dataset, filepath, embeddings_path, subset=None):
+def load_data(dataset, model, filepath, embeddings_path, alphabet, subset=None):
     if dataset == 'yelp':
         data = pd.read_csv(filepath, header=None)
         data_x = data.iloc[:subset,1:].values.flatten()
@@ -93,39 +103,59 @@ def load_data(dataset, filepath, embeddings_path, subset=None):
         data_y = data.iloc[:subset, 3].values
         y = []
         for i in data_y:
-            if i == 0:
+            if i == 'FAKE':
                 y.append([1, 0])
             else:
                 y.append([0, 1])
 
-    sequence_length = max([len(s.split(' ')) for s in data_x])
     if not subset:
         subset = len(y)
 
-    model = Word2Vec.load(embeddings_path)
-    vocabulary = Dictionary()
-    vocabulary.doc2bow(model.wv.vocab.keys(), allow_update=True)
-    w2idx = {v: k+1 for k,v in vocabulary.items()}
-    w2vec = {word: model[word] for word in w2idx.keys()}
+    if model == 'dcnn':
+        sequence_length = 1014
 
-    x = []
-    for i, s in enumerate(data_x):
+        x = []
         sample = []
-        for w in re.sub('[^a-zA-Z0-9\s]', '', s).split():
-            try:
-                sample.append(w2idx[re.sub('\W', '', w)])
-            except KeyError:
-                sample.append(0)
-        # Padding
-        if len(sample) > sequence_length:
-            sample = sample[:sequence_length]
-        else:
-            for _ in range(sequence_length - len(sample)):
-                sample.append(0)
-        x.append(sample)
-        if i % 1000 == 0:
-            print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
-    print('Loading: %6d/%d' % (i, subset))
+        for i, s in enumerate(data_x):
+            sample = [alphabet.find(char) for char in s[:min(sequence_length, len(sample))]]
+            if len(sample) < sequence_length:
+                for _ in range(sequence_length - len(sample)):
+                    sample.append(len(alphabet)) #null character, since alphabet length is 73
+            x.append(sample)
+            if i % 1000 == 0:
+                print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
+        print('Loading: %6d/%d' % (i+1, subset))
+
+        w2idx = None
+        w2vec = None
+
+    elif model == 'scnn':
+        sequence_length = max([len(s.split(' ')) for s in data_x])
+
+        model = Word2Vec.load(embeddings_path)
+        vocabulary = Dictionary()
+        vocabulary.doc2bow(model.wv.vocab.keys(), allow_update=True)
+        w2idx = {v: k+1 for k,v in vocabulary.items()}
+        w2vec = {word: model[word] for word in w2idx.keys()}
+
+        x = []
+        for i, s in enumerate(data_x):
+            sample = []
+            for w in re.sub('[^a-zA-Z0-9\s]', '', s).split():
+                try:
+                    sample.append(w2idx[re.sub('\W', '', w)])
+                except KeyError:
+                    sample.append(0)
+            # Padding
+            if len(sample) > sequence_length:
+                sample = sample[:sequence_length]
+            else:
+                for _ in range(sequence_length - len(sample)):
+                    sample.append(0)
+            x.append(sample)
+            if i % 1000 == 0:
+                print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
+        print('Loading: %6d/%d' % (i+1, subset))
 
     x = np.array(x)
     y = np.array(y)
@@ -146,14 +176,14 @@ def main(args):
     vecpath = 'data/word2vec/' + args.dataset + '_combined_word2vec'
 
     # CONSTANTS
-    data_features = 300
-    data_sequence = None
     data_num_classes = 2
     savepath = modelpath + args.model + '/best' + teststring + '.hdf5'
+    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+-=<>()[]{}"
 
     # HYPERPARAMETERS
     filter_size = 3
     if args.model == 'scnn':
+        data_features = 300
         filter_num = 100
         dropout_rate = 0.5
         mini_batch = 50
@@ -161,40 +191,50 @@ def main(args):
         filter_blocks = None
         optimizer = Adadelta(lr=0.5)
     elif args.model == 'dcnn':
+        data_features = 16
         filter_num = 64
         dropout_rate = 0
         mini_batch = 128
         num_epochs = int(args.epochs)
         filter_blocks = [10, 10, 4, 4]
-        optimizer = SGD()
+        optimizer = SGD(momentum=0.9)
 
     print('Loading Dataset')
-    x, y, idx, vec, data_sequence = load_data(args.dataset, datapath, vecpath, subset=subset)
+    x, y, idx, vec, data_sequence = load_data(args.dataset, args.model, datapath, vecpath, alphabet, subset=subset)
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
 
-    vocab_size = len(idx) + 1
-    embeddings = np.zeros((vocab_size, data_features))
-    for w, i in idx.items():
-        embeddings[i, :] = vec[w]
-    print('Embeddings shape: ', embeddings.shape)
+    if args.model == 'scnn':
+        vocab_size = len(idx) + 1
+        embeddings = np.zeros((vocab_size, data_features))
+        for w, i in idx.items():
+            embeddings[i, :] = vec[w]
+        print('Embeddings shape: ', embeddings.shape)
+    elif args.model == 'dcnn':
+        vocab_size = len(alphabet) + 1 + 1
+        embeddings = None
 
     print('Training Model', args.model.upper() + '(' + args.dataset + ')')
-    shallow= CNN(x=x_train, y=y_train, 
+    print(y_train.shape, y_train[0])
+    network= CNN(x=x_train, y=y_train, 
                  data_features=data_features, 
                  data_sequence=data_sequence, 
                  num_labels=data_num_classes, 
                  vocab_size=vocab_size, 
                  embeddings=embeddings,
+                 trainable=args.model=='dcnn',
                  savepath=savepath,
                  saved=args.saved)
     if not args.saved:
-        shallow.graph(type=args.model, 
+        network.graph(type=args.model, 
+                      filter_num=filter_num,
                       num_filter_block=filter_blocks, 
                       dropout_rate=dropout_rate)
-    shallow.train(optimizer=optimizer, 
+    network.train(optimizer=optimizer, 
                   num_epochs=num_epochs, 
                   mini_batch=mini_batch)
-    shallow.test(x=x_test, y=y_test)
+    print('')
+    print('Testing on: %d', len(y_test))
+    network.test(x=x_test, y=y_test)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
