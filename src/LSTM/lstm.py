@@ -138,7 +138,7 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
         model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
 
         print("Train...")
-        
+
     checkpoint = ModelCheckpoint(output_name, monitor='val_acc', mode='auto', save_best_only=True, verbose=1)
     callback_list = [checkpoint]
     model.fit(X_train, y_train, batch_size=32, epochs=3, validation_data=(X_test, y_test),
@@ -150,7 +150,7 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
     print('Test accuracy:', score[1])
 
 
-def main():
+def main(args):
 
     # =======================
     # LOAD THE DATA FOR YELP
