@@ -12,6 +12,7 @@ from tensorflow.python.keras.optimizers import Adadelta, SGD
 from tensorflow.python.keras.callbacks import ModelCheckpoint
 from gensim.models import Word2Vec
 from gensim.corpora.dictionary import Dictionary
+from sklearn.model_selection import train_test_split
 
 class CNN:
     def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings, savepath, saved=False):
@@ -68,21 +69,38 @@ class CNN:
         callbacks_list = [checkpoint]
         self.model.fit(self.x, self.y, validation_split=val_split, epochs=num_epochs, 
                        batch_size=mini_batch, callbacks=callbacks_list)
+    def test(self, x, y):
+        result = self.model.evaluate(x, y)
+        print('')
+        for name, value in zip(self.model.metrics_names, result):
+                print(name, value)
 
-def load_data(filepath, embeddings_path, subset=None):
-    yelp_data = pd.read_csv(filepath, header=None)
-    yelp_x = yelp_data.iloc[:,1:].values
-    yelp_y = yelp_data.iloc[:,0].values-1 # fix since output labels are bizarly {1,2}
+def load_data(dataset, filepath, embeddings_path, subset=None):
+    if dataset == 'yelp':
+        data = pd.read_csv(filepath, header=None)
+        data_x = data.iloc[:subset,1:].values.flatten()
+        data_y = data.iloc[:subset,0].values-1 # fix since output labels are bizarly {1,2}
+        y = []
+        for i in data_y:
+            if i == 0:
+                y.append([1, 0])
+            else:
+                y.append([0, 1])
+
+    elif dataset == 'fakenews':
+        data = pd.read_csv(filepath, header=None)
+        data_x = data.iloc[:subset, 1:2].values.flatten()
+        data_y = data.iloc[:subset, 3].values
+        y = []
+        for i in data_y:
+            if i == 0:
+                y.append([1, 0])
+            else:
+                y.append([0, 1])
+
+    sequence_length = max([len(s.split(' ')) for s in data_x])
     if not subset:
-        subset = len(yelp_y)
-
-    sequence_length = max([len(s.split(' ')) for s in yelp_x[:subset][0]])
-    y = []
-    for i in yelp_y[:subset]:
-        if i == 0:
-            y.append([1, 0])
-        else:
-            y.append([0, 1])
+        subset = len(y)
 
     model = Word2Vec.load(embeddings_path)
     vocabulary = Dictionary()
@@ -91,13 +109,13 @@ def load_data(filepath, embeddings_path, subset=None):
     w2vec = {word: model[word] for word in w2idx.keys()}
 
     x = []
-    for i, s in enumerate(yelp_x[:subset]):
+    for i, s in enumerate(data_x):
         sample = []
-        for w in re.sub('[^a-zA-Z0-9\s]', '', s[0]).split():
-            #try:
-            sample.append(w2idx[re.sub('\W', '', w[0].lower())])
-            #except KeyError:
-            #    sample.append(0)
+        for w in re.sub('[^a-zA-Z0-9\s]', '', s).split():
+            try:
+                sample.append(w2idx[re.sub('\W', '', w)])
+            except KeyError:
+                sample.append(0)
         # Padding
         if len(sample) > sequence_length:
             sample = sample[:sequence_length]
@@ -108,12 +126,11 @@ def load_data(filepath, embeddings_path, subset=None):
         if i % 1000 == 0:
             print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
     print('Loading: %6d/%d' % (i, subset))
-    #print('X list ', len(x), len(x[0]))
-    #print('Y list ', len(y), len(y[0]))
 
     x = np.array(x)
     y = np.array(y)
     print('Dataset shape: ', x.shape, y.shape)
+
     return x, y, w2idx, w2vec, sequence_length
 
 def main(args):
@@ -152,7 +169,8 @@ def main(args):
         optimizer = SGD()
 
     print('Loading Dataset')
-    x, y, idx, vec, data_sequence = load_data(datapath, vecpath, subset=subset)
+    x, y, idx, vec, data_sequence = load_data(args.dataset, datapath, vecpath, subset=subset)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
 
     vocab_size = len(idx) + 1
     embeddings = np.zeros((vocab_size, data_features))
@@ -161,7 +179,7 @@ def main(args):
     print('Embeddings shape: ', embeddings.shape)
 
     print('Training Model', args.model.upper() + '(' + args.dataset + ')')
-    shallow= CNN(x=x, y=y, 
+    shallow= CNN(x=x_train, y=y_train, 
                  data_features=data_features, 
                  data_sequence=data_sequence, 
                  num_labels=data_num_classes, 
@@ -176,6 +194,7 @@ def main(args):
     shallow.train(optimizer=optimizer, 
                   num_epochs=num_epochs, 
                   mini_batch=mini_batch)
+    shallow.test(x=x_test, y=y_test)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
