@@ -104,6 +104,7 @@ def load_data(dataset, model, filepath, embeddings_path, alphabet, subset=None):
         y = []
         for i in data_y:
             if i == 'FAKE':
+                y.append([1, 0])
             else:
                 y.append([0, 1])
 
