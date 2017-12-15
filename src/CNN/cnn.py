@@ -49,47 +49,57 @@ class CNN:
 
     def train(self, optimizer, modelpath, num_epochs=1, mini_batch=1, val_split=0.2):
         self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-        checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+        checkpoint = ModelCheckpoint(modelpath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
         callbacks_list = [checkpoint]
         self.model.fit(self.x, self.y, validation_split=val_split, epochs=num_epochs, 
-                       batch_size=mini_batch, callbacks=callbacks_list, verbose=0)
+                       batch_size=mini_batch, callbacks=callbacks_list)
 
-def load_data(filepath, embeddings_path):
+def load_data(filepath, embeddings_path, subset=None):
     yelp_data = pd.read_csv(filepath, header=None)
     yelp_x = yelp_data.iloc[:,1:].values
-    y = yelp_data.iloc[:,0].values-1 # fix since output labels are bizarly {1,2}
+    yelp_y = yelp_data.iloc[:,0].values-1 # fix since output labels are bizarly {1,2}
+    if not subset:
+        subset = len(yelp_y)
+
+    y = []
+    for i in yelp_y[:subset]:
+        if i == 0:
+            y.append([1, 0])
+        else:
+            y.append([0, 1])
 
     model = Word2Vec.load(embeddings_path)
     x = []
     data_sequence = 0
-    size = len(yelp_x)
-    for i, s in enumerate(yelp_x):
+    for i, s in enumerate(yelp_x[:subset]):
         sample = []
         for w in re.sub('[^a-zA-Z0-9\s]', '', s[0]).split():
             try:
                 sample.append(list(model[re.sub('\W', '', w[0].lower())]))
-                x.append(sample)
                 if len(sample) > data_sequence:
                     data_sequence = len(sample)
             except KeyError:
                 pass
+        x.append(sample)
         if i % 1000 == 0:
-            print('Loading: %6d/%d' % (i, size), end='\r', flush=True)
-        print('Loading: %6d/%d' % (i, size))
+            print('Loading: %6d/%d' % (i, subset), end='\r', flush=True)
+    print('Loading: %6d/%d' % (i, subset))
 
     zeros = [0.0 for i in range(300)]
     for i,v in enumerate(x):
         for _ in range(data_sequence - len(v)):
             x[i].append(zeros)
 
-    print('Dataset shape: ', x.shape)
-    return np.array(x), y, data_sequence
+    x = np.array(x)
+    y = np.array(y)
+    print('Dataset shape: ', x.shape, y.shape)
+    return x, y, data_sequence
 
 def main():
     # CONSTANTS
     data_features = 300
     data_num_classes = 2
-    modelpath = 'model/yelp/scnn'
+    modelpath = 'model/yelp/scnn/{epoch:02d}-{val_acc:.2f}.hdf5'
 
     # HYPERPARAMETERS
     filter_size = 3
@@ -97,12 +107,13 @@ def main():
     dropout_rate = 0.5
     mini_batch = 50
     num_epochs = 1
+    subset = 1000
 
     print('Loading Dataset')
-    x, y, data_sequence = load_data('data/csv/yelp_dataset/train.csv', 'data/word2vec/yelp_combined_word2vec')
+    x, y, data_sequence = load_data('data/csv/yelp_dataset/train.csv', 'data/word2vec/yelp_combined_word2vec', subset=subset)
     print('Training Model')
     shallow= CNN(x, y, data_features=data_features, data_sequence=data_sequence, num_labels=data_num_classes)
-    shallow.arch(dropout_rate=dropout_rate)
+    shallow.graph(dropout_rate=dropout_rate)
     shallow.train(optimizer=Adadelta(), modelpath=modelpath, num_epochs=num_epochs, mini_batch=mini_batch)
 
 if __name__ == '__main__':
