@@ -117,7 +117,7 @@ def tokenizer(text):
 # ===========
 
 
-def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, output_name, saved=False):
+def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, output_name, saved=False, batch_size=32, num_epochs=5):
 
     if saved:
         print("Loading saved model...")
@@ -144,7 +144,7 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
 
     checkpoint = ModelCheckpoint(output_name, monitor='val_acc', mode='auto', save_best_only=True, verbose=1)
     callback_list = [checkpoint]
-    model.fit(X_train, y_train, batch_size=32, epochs=3, validation_data=(X_test, y_test),
+    model.fit(X_train, y_train, batch_size=batch_size, epochs=num_epochs, validation_data=(X_test, y_test),
               shuffle=True, callbacks=callback_list)
 
     print("Evaluate...")
@@ -229,7 +229,7 @@ def main(args):
         y_test = np.array(y_test)
 
         print("Running the model ...")
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.saved)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.saved, num_epochs=3)
 
 
     # ==============================================================
@@ -297,7 +297,7 @@ def main(args):
         
         print("Running the model ...")
 
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.saved)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.saved, num_epochs=5)
 
 
     else: 
