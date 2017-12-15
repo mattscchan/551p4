@@ -14,7 +14,7 @@ from gensim.models import Word2Vec
 from gensim.corpora.dictionary import Dictionary
 
 class CNN:
-    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings, savepath):
+    def __init__(self, x, y, data_features, data_sequence, num_labels, vocab_size, embeddings, savepath, saved=False):
         self.x = x
         self.y = y
         self.num_labels = num_labels
@@ -76,7 +76,7 @@ def load_data(filepath, embeddings_path, subset=None):
     if not subset:
         subset = len(yelp_y)
 
-    sequence_length = max([len(s.split(' ')) for s in yelp_x[:subset]])
+    sequence_length = max([len(s.split(' ')) for s in yelp_x[:subset][0]])
     y = []
     for i in yelp_y[:subset]:
         if i == 0:
@@ -117,20 +117,25 @@ def load_data(filepath, embeddings_path, subset=None):
     return x, y, w2idx, w2vec, sequence_length
 
 def main(args):
+    if args.testing:
+        subset = 1000
+        teststring = '-t'
+    else:
+        subset = None
+        teststring = ''
+        
     modelpath = 'model/' + args.dataset + '/'
     datapath = 'data/csv/' + args.dataset + '_dataset/train.csv'
-    vecpath = 'data/word2vec/' + args.dataset + '_dataset/_combined_word2vec'
+    vecpath = 'data/word2vec/' + args.dataset + '_combined_word2vec'
 
     # CONSTANTS
     data_features = 300
     data_sequence = None
     data_num_classes = 2
-    savepath = 'model/yelp/dcnn/{epoch:02d}-{val_acc:.2f}.hdf5'
-    savepath = modelpath + args.model + '/best.hdf5'
+    savepath = modelpath + args.model + '/best' + teststring + '.hdf5'
 
     # HYPERPARAMETERS
     filter_size = 3
-    subset = None
     if args.model == 'scnn':
         filter_num = 100
         dropout_rate = 0.5
@@ -162,13 +167,13 @@ def main(args):
                  num_labels=data_num_classes, 
                  vocab_size=vocab_size, 
                  embeddings=embeddings,
-                 savepath=savepath)
+                 savepath=savepath,
+                 saved=args.saved)
     if not args.saved:
         shallow.graph(type=args.model, 
                       num_filter_block=filter_blocks, 
                       dropout_rate=dropout_rate)
     shallow.train(optimizer=optimizer, 
-                  modelpath=savepath, 
                   num_epochs=num_epochs, 
                   mini_batch=mini_batch)
 
@@ -176,8 +181,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset')
     parser.add_argument('model')
-    parser.add_argument('epochs', default=1)
+    parser.add_argument('epochs')
     parser.add_argument('-s', '--saved', action='store_true', default=False)
+    parser.add_argument('-t', '--testing', action='store_true', default=False)
     args = parser.parse_args()
     main(args)
 
