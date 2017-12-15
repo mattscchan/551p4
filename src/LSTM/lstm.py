@@ -15,7 +15,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 import argparse
 
-random.seed(1882)
+SEED_VALUE = 1882
+random.seed(SEED_VALUE)
 
 # =========================================
 # LOADING DATA / DIFFERENT FOR EACH DATASET
@@ -119,6 +120,7 @@ def tokenizer(text):
 def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, output_name, saved=False):
 
     if saved:
+        print("Loading saved model...")
         model = load_model(output_name)
     else:
         model = Sequential()
@@ -129,12 +131,13 @@ def lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding
                             weights=[embedding_weights],
                             input_length=input_length))
         model.add(LSTM(units=512))
+        model.add(Dropout(0.5, seed=SEED_VALUE))
         model.add(Dense(1, activation='sigmoid'))
 
         model.summary()
 
         print('Compiling the Model...')
-        sgd = optimizers.rmsprop(lr=0.01, clipnorm=0.5)
+        sgd = optimizers.rmsprop(lr=0.01, clipnorm=5)
         model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
 
         print("Train...")
@@ -226,7 +229,7 @@ def main(args):
         y_test = np.array(y_test)
 
         print("Running the model ...")
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.saved)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'yelp_model.hdf5', args.s)
 
 
     # ==============================================================
@@ -294,7 +297,7 @@ def main(args):
         
         print("Running the model ...")
 
-        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.saved)
+        lstm_model(X_train, y_train, X_test, y_test, vocab_dim, n_symbols, embedding_weights, input_length, 'fakenews_model.hdf5', args.s)
 
 
     else: 
@@ -303,7 +306,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset')
-    parser.add_argument('saved', type=bool)
+    parser.add_argument('-s', '--saved', action='store_true', default=False)
     args = parser.parse_args()
     main(args)
 
