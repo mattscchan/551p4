@@ -1,8 +1,10 @@
 import argparse
 import os
+import re
 from gensim.models import KeyedVectors
 from nltk.tokenize import word_tokenize, sent_tokenize          
 from nltk.corpus import stopwords as StopWords
+from collections import defaultdict
 from nltk import trigrams
 
 # Original Hyperparameters found in the paper.
@@ -66,16 +68,29 @@ def tokenize(example):
 	punct = [',', '.', '"', '\n']	
 	
 	word_list = word_tokenize(example)
-	word_list = [word.lower() for word in word_list if word not in punct]
+	word_list = [re.sub('[^a-zA-Z0-9\s]', '', word.lower()) for word in word_list if word not in punct]
 	return word_list
 
 def get_max(W):
 	pass
 
-def create_trigram_model(x_train, examples_list):
-
-
-	pass
+def create_trigram_model(x_train, examples_list, left_padding=True, right_padding=True):
+    model = defaultdict(lambda: defaultdict(lambda: 0))
+    # Training
+    for _, s in enumerate(x_train):
+        w1 = None
+        w2 = None
+        for i, w in enumerate(tokenize(s)):
+            model[(w1, w2)][w] += 1
+            w1 = w2
+            w2 = w
+        model[(w1, w)][None] += 1
+        model[(w, None)][None] += 1
+    for w1_w2 in model:
+        total_count = float(sum(model[w1_w2].values()))
+        for w3 in model[w1_w2]:
+            model[w1_w2][w3] /= total_count
+    return model
 
 def main(args):
 	J_x = 0
