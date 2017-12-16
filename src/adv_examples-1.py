@@ -116,7 +116,7 @@ def check_trigram(model, example):
             w2 = w
         count += model[w1, w][None]
         count += model[w, None][None]
-    return = float(count)/(i+1)
+    return loat(count)/(i+1)
 
 # Difference of log of prob of sentences
 def check_constraints(trigrams, condition, sentence_ori, sentence_new):
@@ -125,6 +125,7 @@ def check_constraints(trigrams, condition, sentence_ori, sentence_new):
     return abs(math.log(prob_new) - math.log(prob_new)) < condition
 
 def main(args):
+    classifer_path = args.model
     J_x = 0
     replaced_words = 0
     examples_list = []
@@ -133,6 +134,7 @@ def main(args):
     y_train = []
     classifier = load_model(classifier_path)
     syntactic_bound = 2
+    delta = delta
 
     glove_vecs = load_vectors()
 
@@ -155,6 +157,7 @@ def main(args):
 
     trigram_model = create_trigram_model(x_train, examples_list)
 
+    modified_samples = 0
     for example in examples_list:
         example_arr = tokenize(example)
         ori_arr = example_arr
@@ -180,7 +183,9 @@ def main(args):
                                 replaced_words = word_count
                 word_count += 1
             J_x = get_max(W, classifier)
+        modified_samples += 1
 
+    print(modified_samples)
 
 
 if __name__ == '__main__':
